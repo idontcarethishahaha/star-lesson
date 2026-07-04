@@ -1,0 +1,22 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: 192.168.227.128:8848
+      username: nacos
+      password: nacos
+      discovery:
+        enabled: true  # 开启服务发现，注册到Nacos
+        namespace: star-lesson-dev
+        group: sl-group
+        ip: 192.168.29.1
+      config:
+        enabled: false  # 禁用远程配置，使用本地配置
+  data:
+    redis:
+      host: 192.168.227.128
+      port: 16379
+      password:
+logging:
+  level:
+    com:
+      tianji: debug

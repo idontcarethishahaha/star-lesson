@@ -1,0 +1,31 @@
+# Created by .ignore support plugin (hsz.mobi)
+### Example user template template
+### Example user template
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+target
+*.class
+
+*.log
+.settings
+.project
+logs
+job
+
+templates
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Project docs
+CODE_WIKI.md
+project.md
+project-v2.md
+startup.sh
+配置汇总文档.md

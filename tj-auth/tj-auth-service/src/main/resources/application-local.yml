@@ -1,0 +1,24 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: 192.168.227.128:8848
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: star-lesson-dev
+        group: sl-group
+      config:
+        enabled: false
+  # 本地关键配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.227.128:3306/tj_auth?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root
+  data:
+    redis:
+      host: 192.168.227.128
+      port: 6379
+logging:
+  level:
+    com.tianji: debug

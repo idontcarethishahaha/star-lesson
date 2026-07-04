@@ -1,0 +1,54 @@
+server:
+  port: 9999
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  profiles:
+    active: dev
+  application:
+    name: chat-service
+  cloud:
+    nacos:
+      config:
+        file-extension: yaml
+        namespace: star-lesson-dev
+  config:
+    import:
+      - nacos:${spring.application.name}.yaml
+      - nacos:shared-spring.yaml
+      - nacos:shared-redis.yaml
+      - nacos:shared-mybatis.yaml
+      - nacos:shared-logs.yaml
+      - nacos:shared-feign.yaml
+      - nacos:shared-qdrant.yaml
+tj:
+  swagger:
+    enable: true
+    enableResponseWrap: true
+    package-path: com.tianji.chat.controller
+    title: StarLesson天骄星课堂 - AI智能对话中心接口文档
+    description: 该服务提供AI聊天、AI知识库分析等功能
+    contact-name: 研究院
+    contact-url: http://www.itcast.cn/
+    contact-email: 1418875140@qq.com
+    version: v1.0
+  jdbc:
+    database: tj_chat
+  auth:
+    resource:
+      enable: true
+      excludeLoginPaths:
+  mq:
+    listener:
+      retry:
+        stateless: false
+langchain4j:
+  base-url: https://open.bigmodel.cn/api/paas/v4
+  api-key: ${DASHSCOPE_API_KEY}
+  max-tokens: 2000
+  timeout-seconds: 60
+  model-name: glm-4.5-flash
+  embedding-model-name: embedding-3
+  max-retries: 3
+  chat-model-temperature: 0.7
+  streaming-chat-model-temperature: 0.7

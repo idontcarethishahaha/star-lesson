@@ -1,0 +1,60 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: 192.168.227.128:8848 # nacos注册中心
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: star-lesson-dev
+        group: sl-group
+        ip: 192.168.29.1
+      config:
+        namespace: star-lesson-dev
+        group: sl-group
+        file-extension: yaml
+  config:
+    import:
+      - optional:nacos:shared-spring.yaml # 共享spring配置
+      - optional:nacos:shared-redis.yaml # 共享redis配置
+      - optional:nacos:shared-mybatis.yaml # 共享mybatis配置
+      - optional:nacos:shared-logs.yaml # 共享日志配置
+      - optional:nacos:shared-feign.yaml # 共享feign配置
+      - optional:nacos:shared-mq.yaml # 共享mq配置
+      - optional:nacos:shared-xxljob.yaml # 共享job配置
+#  # 本地关键配置
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://192.168.227.128:3306/tj_data?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+#    username: root
+#    password: root
+    datasource:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://192.168.227.128:3306/tj_data?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+      username: root
+      password: root
+      hikari:
+        # 扩容连接池，应对启动一次性查询
+        maximum-pool-size: 30
+        minimum-idle: 10
+        # 大幅延长获取连接等待时间，避免3秒超时
+        connection-timeout: 15000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+        # 开启泄漏检测，打印卡死连接的代码堆栈
+        leak-detection-threshold: 3000
+        # 后台定时校验连接有效性，剔除死连接
+        validation-timeout: 2000
+        keepalive-time: 300000
+  data:
+    redis:
+      host: 192.168.227.128
+      port: 6379
+rocketmq:
+  name-server: 192.168.227.128:9876
+  producer:
+    group: data-service-producer
+seata:
+  enabled: false
+logging:
+  level:
+    com.tianji: debug

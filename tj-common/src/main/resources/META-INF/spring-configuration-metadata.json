@@ -1,0 +1,323 @@
+{
+  "groups": [
+    {
+      "name": "tj.swagger",
+      "type": "com.tianji.common.autoconfigure.swagger.Knife4jConfiguration",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties"
+    },
+    {
+      "name": "tj.mq",
+      "description": "RocketMQ 消息队列配置"
+    },
+    {
+      "name": "tj.redis",
+      "description": "Redis 缓存配置"
+    },
+    {
+      "name": "tj.jdbc",
+      "description": "数据库连接配置"
+    },
+    {
+      "name": "tj.mybatis",
+      "description": "MyBatis-Plus 配置"
+    },
+    {
+      "name": "tj.minio",
+      "type": "com.tianji.aigc.config.MinioProperties",
+      "sourceType": "com.tianji.aigc.config.MinioProperties",
+      "description": "MinIO 对象存储配置"
+    },
+    {
+      "name": "tj.auth",
+      "sourceType": "com.tianji.gateway.config.AuthProperties",
+      "description": "认证权限配置"
+    },
+    {
+      "name": "tj.auth.resource",
+      "sourceType": "com.tianji.authsdk.resource.config.ResourceAuthProperties",
+      "description": "资源服务认证配置"
+    },
+    {
+      "name": "tj.xxl-job",
+      "type": "com.tianji.common.autoconfigure.xxljob.XxlJobConfig",
+      "sourceType": "com.tianji.common.autoconfigure.xxljob.XxlJobProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "tj.swagger.enable",
+      "type": "java.lang.Boolean",
+      "description": "是否开启swagger功能，默认false",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "tj.swagger.enableResponseWrap",
+      "type": "java.lang.Boolean",
+      "description": "是否开启响应结果包装功能，默认false",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "tj.swagger.packagePath",
+      "type": "java.lang.String",
+      "description": "API接口扫描包",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.swagger.title",
+      "type": "java.lang.String",
+      "description": "API文档标题",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.swagger.description",
+      "type": "java.lang.String",
+      "description": "文档描述",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.swagger.contactName",
+      "type": "java.lang.String",
+      "description": "联系人姓名",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.swagger.contactUrl",
+      "type": "java.lang.String",
+      "description": "联系人主页地址",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.swagger.contactEmail",
+      "type": "java.lang.String",
+      "description": "联系人邮箱",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.swagger.version",
+      "type": "java.lang.String",
+      "description": "版本",
+      "sourceType": "com.tianji.common.autoconfigure.swagger.SwaggerConfigProperties",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.mq.host",
+      "type": "java.lang.String",
+      "description": "RocketMQ NameServer 地址",
+      "defaultValue": "192.168.227.128"
+    },
+    {
+      "name": "tj.mq.port",
+      "type": "java.lang.Integer",
+      "description": "RocketMQ NameServer 端口",
+      "defaultValue": 9876
+    },
+    {
+      "name": "tj.mq.listener.retry.stateless",
+      "type": "java.lang.Boolean",
+      "description": "是否无状态消费重试",
+      "defaultValue": true
+    },
+    {
+      "name": "tj.redis.host",
+      "type": "java.lang.String",
+      "description": "Redis 服务地址",
+      "defaultValue": "192.168.227.128"
+    },
+    {
+      "name": "tj.redis.pool.max-active",
+      "type": "java.lang.Integer",
+      "description": "Redis连接池最大连接数",
+      "defaultValue": 8
+    },
+    {
+      "name": "tj.redis.pool.max-idle",
+      "type": "java.lang.Integer",
+      "description": "Redis最大空闲连接",
+      "defaultValue": 8
+    },
+    {
+      "name": "tj.redis.pool.min-idle",
+      "type": "java.lang.Integer",
+      "description": "Redis最小空闲连接",
+      "defaultValue": 1
+    },
+    {
+      "name": "tj.redis.pool.max-wait",
+      "type": "java.lang.Integer",
+      "description": "无连接时最大等待时间(ms)",
+      "defaultValue": 300
+    },
+    {
+      "name": "tj.jdbc.host",
+      "type": "java.lang.String",
+      "description": "数据库地址",
+      "defaultValue": "192.168.227.128"
+    },
+    {
+      "name": "tj.jdbc.port",
+      "type": "java.lang.Integer",
+      "description": "数据库端口",
+      "defaultValue": 3306
+    },
+    {
+      "name": "tj.jdbc.database",
+      "type": "java.lang.String",
+      "description": "数据库名称",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.jdbc.username",
+      "type": "java.lang.String",
+      "description": "数据库用户名",
+      "defaultValue": "root"
+    },
+    {
+      "name": "tj.jdbc.password",
+      "type": "java.lang.String",
+      "description": "数据库密码",
+      "defaultValue": "123"
+    },
+    {
+      "name": "tj.mybatis.configuration.default-enum-type-handler",
+      "type": "java.lang.String",
+      "description": "默认枚举类型处理器",
+      "defaultValue": "com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler"
+    },
+    {
+      "name": "tj.mybatis.global-config.field-strategy",
+      "type": "java.lang.Integer",
+      "description": "字段验证策略",
+      "defaultValue": 0
+    },
+    {
+      "name": "tj.mybatis.global-config.db-config.logic-delete-field",
+      "type": "java.lang.String",
+      "description": "逻辑删除字段名",
+      "defaultValue": "deleted"
+    },
+    {
+      "name": "tj.mybatis.global-config.db-config.id-type",
+      "type": "java.lang.String",
+      "description": "ID生成策略",
+      "defaultValue": "assign_id"
+    },
+    {
+      "name": "tj.minio.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用 MinIO",
+      "sourceType": "com.tianji.aigc.config.MinioProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "tj.minio.endpoint",
+      "type": "java.lang.String",
+      "description": "MinIO 服务地址",
+      "sourceType": "com.tianji.aigc.config.MinioProperties",
+      "defaultValue": "http://192.168.227.128:9000"
+    },
+    {
+      "name": "tj.minio.accessKey",
+      "type": "java.lang.String",
+      "description": "MinIO Access Key",
+      "sourceType": "com.tianji.aigc.config.MinioProperties",
+      "defaultValue": "minioadmin"
+    },
+    {
+      "name": "tj.minio.secretKey",
+      "type": "java.lang.String",
+      "description": "MinIO Secret Key",
+      "sourceType": "com.tianji.aigc.config.MinioProperties",
+      "defaultValue": "minioadmin"
+    },
+    {
+      "name": "tj.minio.bucket",
+      "type": "java.lang.String",
+      "description": "MinIO Bucket 名称",
+      "sourceType": "com.tianji.aigc.config.MinioProperties",
+      "defaultValue": "tj-aigc"
+    },
+    {
+      "name": "tj.auth.exclude-path",
+      "type": "java.util.Set<java.lang.String>",
+      "description": "网关放行路径",
+      "sourceType": "com.tianji.gateway.config.AuthProperties",
+      "defaultValue": []
+    },
+    {
+      "name": "tj.auth.resource.enable",
+      "type": "java.lang.Boolean",
+      "description": "是否开启资源服务认证",
+      "sourceType": "com.tianji.authsdk.resource.config.ResourceAuthProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "tj.auth.resource.include-login-paths",
+      "type": "java.util.List<java.lang.String>",
+      "description": "需要登录的路径",
+      "sourceType": "com.tianji.authsdk.resource.config.ResourceAuthProperties"
+    },
+    {
+      "name": "tj.auth.resource.exclude-login-paths",
+      "type": "java.util.List<java.lang.String>",
+      "description": "不需要登录的路径",
+      "sourceType": "com.tianji.authsdk.resource.config.ResourceAuthProperties"
+    },
+    {
+      "name": "tj.xxl-job.accessToken",
+      "type": "java.lang.String",
+      "description": "xxl-job访问token",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.xxl-job.admin.address",
+      "type": "java.lang.String",
+      "description": "xxl-job管理端地址",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.xxl-job.executor.appName",
+      "type": "java.lang.String",
+      "description": "xxl-job执行器名称",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.xxl-job.executor.address",
+      "type": "java.lang.String",
+      "description": "xxl-job执行器地址，ip:port，可以为空",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.xxl-job.executor.ip",
+      "type": "java.lang.String",
+      "description": "xxl-job执行器ip",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.xxl-job.executor.port",
+      "type": "java.lang.String",
+      "description": "xxl-job执行器端口，如果为空则随机",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.xxl-job.executor.logPath",
+      "type": "java.lang.String",
+      "description": "xxl-job执行器日志目录",
+      "defaultValue": ""
+    },
+    {
+      "name": "tj.xxl-job.executor.logRetentionDays",
+      "type": "java.lang.String",
+      "description": "xxl-job执行器日志存储最长周期，过期会被清理",
+      "defaultValue": ""
+    }
+  ],
+  "hints": []
+}

@@ -1,0 +1,9 @@
+spring:
+  redis:
+    host: ${tj.redis.host:192.168.227.128}
+    lettuce:
+      pool:
+        max-active: ${tj.redis.pool.max-active:8}
+        max-idle: ${tj.redis.pool.max-idle:8}
+        min-idle: ${tj.redis.pool.min-idle:1}
+        max-wait: ${tj.redis.pool.max-wait:300}

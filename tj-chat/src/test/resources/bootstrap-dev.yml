@@ -1,0 +1,13 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: 192.168.227.128:8848
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: star-lesson-dev
+        group: sl-group
+        ip: 192.168.227.128
+logging:
+  level:
+    com.tianji: debug

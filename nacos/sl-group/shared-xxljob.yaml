@@ -1,0 +1,9 @@
+tj:
+  xxl-job:
+    access-token: starlesson
+    admin:
+      address: http://192.168.227.128:9527/xxl-job-admin
+    executor:
+      appname: ${spring.application.name}
+      log-retention-days: 10
+      logPath: job/${spring.application.name}

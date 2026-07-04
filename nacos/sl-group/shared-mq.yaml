@@ -1,0 +1,15 @@
+rocketmq:
+  name-server: ${tj.mq.host:192.168.227.128}:${tj.mq.port:9876}
+  producer:
+    group: ${spring.application.name}-producer
+    send-message-timeout: 3000
+    compress-message-body-threshold: 4096
+    max-message-size: 4194304
+    retry-times-when-send-failed: 2
+    retry-times-when-send-async-failed: 2
+    retry-next-server: true
+  consumer:
+    pull-batch-size: 32
+    consume-thread-min: 20
+    consume-thread-max: 64
+    consume-message-batch-max-size: 1

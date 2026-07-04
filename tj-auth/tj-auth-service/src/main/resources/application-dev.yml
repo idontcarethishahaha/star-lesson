@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: 192.168.227.128:8848 # nacos注册中心
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: star-lesson-dev
+        group: sl-group
+        ip: 192.168.227.128
+  config:
+    import:
+      - nacos:shared-spring.yaml
+      - nacos:shared-redis.yaml
+      - nacos:shared-mybatis.yaml
+      - nacos:shared-logs.yaml
+logging:
+  level:
+    com.tianji: debug

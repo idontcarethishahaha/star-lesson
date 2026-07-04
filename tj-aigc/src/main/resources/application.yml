@@ -1,0 +1,103 @@
+server:
+  port: 8094  #端口
+  tomcat:
+    uri-encoding: UTF-8   #服务编码
+spring:
+  profiles:
+    active: local
+  application:
+    name: aigc-service
+  main:
+    allow-circular-references: true # 允许循环引用
+  # 本地关键配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.227.128:3306/tj_aigc?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+  data:
+    redis:
+      host: 192.168.227.128
+      port: 6379
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}
+      chat:
+        options:
+          model: glm-4.5-flash
+    openai:
+      api-key: ${DASHSCOPE_API_KEY}
+      base-url: https://open.bigmodel.cn/api/paas/v4
+      chat:
+        options:
+          model: glm-4.5-flash
+rocketmq:
+  name-server: 192.168.227.128:9876
+  producer:
+    group: aigc-service-producer
+tj:
+  swagger:
+    enable: true
+    package-path: com.tianji.aigc.controller
+    title: StarLesson - AIGC接口文档
+    description: 该服务包含AI相关功能
+    contact-name: 传智教育·研究院
+    contact-url: http://www.itcast.cn/
+    contact-email: zhangzhijun@itcast.cn
+    version: v1.0
+    enableResponseWrap: true
+  auth:
+    resource:
+      enable: true
+  jdbc:
+    database: tj_aigc #指定使用的数据库名
+  ai:
+    prompt:
+      system:
+        chat:
+          data-id: system-chat-message.txt
+          group: sl-group
+          timeout-ms: 20000
+        route-agent:
+          data-id: route-agent-system-message.txt
+        recommend-agent:
+          data-id: recommend-agent-system-message.txt
+        buy-agent:
+          data-id: buy-agent-system-message.txt
+        text:
+          data-id: text-system-chat-message.txt
+    memory:
+      max: 100
+      type: Redis #对话记忆存储方式，Redis / MYSQL / MongoDB
+    chat-type: ENHANCE # ROUTE / ENHANCE / APP
+    audio-type: DASHSCOPE # OPENAI / DASHSCOPE
+  # MinIO 配置（替代阿里云 OSS）
+  minio:
+    enabled: true
+    endpoint: http://192.168.227.128:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket: tj-aigc
+  # 阿里云 OSS 配置（已禁用，改用 MinIO）
+  ali:
+    oss:
+      endpoint: oss-cn-shanghai.aliyuncs.com
+      access-id: ${OSS_ACCESSKEY_ID:填你自己的}
+      access-key: ${OSS_ACCESSKEY_SECRET:填你自己的}
+      bucket: itcast-zzj
+  # Qdrant 向量数据库配置
+  qdrant:
+    host: 192.168.227.128
+    port: 6333
+    secure: false
+
+# LangChain4j 配置
+langchain4j:
+  base-url: https://open.bigmodel.cn/api/paas/v4  #阿里云 DashScope
+  api-key: ${DASHSCOPE_API_KEY}
+  max-tokens: 2000
+  timeout-seconds: 60
+  model-name: glm-4.5-flash  # 聊天模型
+  embedding-model-name: embedding-3  # 向量模型（用于 RAG）
+  max-retries: 3
+  chat-model-temperature: 0.7

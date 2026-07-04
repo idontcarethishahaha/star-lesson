@@ -1,0 +1,142 @@
+server:
+  port: 10010  #端口
+  tomcat:
+    uri-encoding: UTF-8   #服务编码
+tj:
+  auth:
+    excludePath:
+      - /error/**
+      - /jwks
+      - GET:/accounts/login
+      - POST:/accounts/login
+      - GET:/accounts/admin/login
+      - POST:/accounts/admin/login
+      - GET:/accounts/refresh
+      - POST:/accounts/refresh
+      - GET:/files/**
+      - POST:/files/**
+      - GET:/ms/files/**
+      - POST:/ms/files/**
+      - GET:/img-tx/**
+spring:
+  profiles:
+    active: local
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: files
+          uri: lb://media-service
+          predicates:
+            - Path=/files/**
+        - id: ms
+          uri: lb://media-service
+          predicates:
+            - Path=/ms/**
+          filters:
+            - StripPrefix=1
+        - id: as
+          uri: lb://auth-service
+          predicates:
+            - Path=/as/**
+          filters:
+            - StripPrefix=1
+            - PreserveHostHeader
+        - id: ds
+          uri: lb://data-service
+          predicates:
+            - Path=/ds/**
+          filters:
+            - StripPrefix=1
+        - id: sms
+          uri: lb://message-service
+          predicates:
+            - Path=/sms/**
+          filters:
+            - StripPrefix=1
+        - id: us
+          uri: lb://user-service
+          predicates:
+            - Path=/us/**
+          filters:
+            - StripPrefix=1
+        - id: cs
+          uri: lb://course-service
+          predicates:
+            - Path=/cs/**
+          filters:
+            - StripPrefix=1
+        - id: os
+          uri: lb://order-service
+          predicates:
+            - Path=/os/**
+          filters:
+            - StripPrefix=1
+        - id: ss
+          uri: lb://search-service
+          predicates:
+            - Path=/ss/**
+          filters:
+            - StripPrefix=1
+        - id: ls
+          uri: lb://learning-service
+          predicates:
+            - Path=/ls/**
+          filters:
+            - StripPrefix=1
+        - id: ps
+          uri: lb://pay-service
+          predicates:
+            - Path=/ps/**
+          filters:
+            - StripPrefix=1
+        - id: ts
+          uri: lb://trade-service
+          predicates:
+            - Path=/ts/**
+          filters:
+            - StripPrefix=1
+        - id: es
+          uri: lb://exam-service
+          predicates:
+            - Path=/es/**
+          filters:
+            - StripPrefix=1
+        - id: rs
+          uri: lb://remark-service
+          predicates:
+            - Path=/rs/**
+          filters:
+            - StripPrefix=1
+        - id: prs
+          uri: lb://promotion-service
+          predicates:
+            - Path=/prs/**
+          filters:
+            - StripPrefix=1
+        - id: ais
+          uri: lb://aigc-service
+          predicates:
+            - Path=/ais/**
+          filters:
+            - StripPrefix=1
+        - id: cht
+          uri: lb://aigc-service
+          predicates:
+            - Path=/chat/**,/file/**,/session/**
+      globalcors: # 全局的跨域处理
+        add-to-simple-url-handler-mapping: true # 解决options请求被拦截问题
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns: # 允许哪些网站的跨域请求
+              - "*"
+            allowedMethods: # 允许的跨域ajax的请求方式
+              - "GET"
+              - "POST"
+              - "DELETE"
+              - "PUT"
+              - "OPTIONS"
+            allowedHeaders: "*" # 允许在请求中携带的头信息
+            allowCredentials: true # 是否允许携带cookie
+            maxAge: 360000 # 这次跨域检测的有效期

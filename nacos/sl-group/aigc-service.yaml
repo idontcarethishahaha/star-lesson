@@ -1,0 +1,11 @@
+﻿spring:
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}
+      chat:
+        options:
+          model: glm-4.5-flash #qwen-plus
+
+tj:
+  jdbc:
+    database: tj_aigc
