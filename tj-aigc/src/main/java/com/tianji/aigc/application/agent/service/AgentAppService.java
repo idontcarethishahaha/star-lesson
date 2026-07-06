@@ -222,6 +222,7 @@ public class AgentAppService {
             agent.setKnowledgeBaseIds(entity.getKnowledgeBaseIds());
             agent.setLlmModelConfig(entity.getLlmModelConfig());
             agent.setMultiModal(entity.getMultiModal());
+            agent.setToolPresetParams(entity.getToolPresetParams());
             agentMapper.updateById(agent);
         }
     }

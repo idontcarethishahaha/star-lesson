@@ -88,23 +88,16 @@ public class SpringAIConfig {
     }
 
     /**
-     * 配置 ChatClient
+     * 配置 ChatClient (基础版，仅带 advisor，工具由 AgentChatClientFactory 动态注入)
      */
     @Bean
     public ChatClient chatClient(@Qualifier("dashscopeChatModel") ChatModel dashScopeChatModel,
                                  Advisor loggerAdvisor,
                                  Advisor messageChatMemoryAdvisor,
-                                 Advisor recordOptimizationAdvisor,
-                                 CourseTools courseTools,
-                                 OrderTools orderTools,
-                                 LearningTools learningTools,
-                                 StudyPlanTools studyPlanTools,
-                                 LearningReportTools learningReportTools,
-                                 CheckInTools checkInTools
+                                 Advisor recordOptimizationAdvisor
     ) {
         return ChatClient.builder(dashScopeChatModel)
                 .defaultAdvisors(loggerAdvisor, messageChatMemoryAdvisor, recordOptimizationAdvisor)
-                .defaultTools(courseTools, orderTools, learningTools, studyPlanTools, learningReportTools, checkInTools)
                 .build();
     }
 

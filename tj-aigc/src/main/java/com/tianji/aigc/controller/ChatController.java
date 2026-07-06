@@ -4,8 +4,10 @@ import cn.hutool.json.JSONObject;
 import com.tianji.aigc.application.chat.dto.AgentChatDTO;
 import com.tianji.aigc.application.chat.service.AgentChatService;
 import com.tianji.aigc.dto.ChatDTO;
+import com.tianji.aigc.entity.ChatRecord;
 import com.tianji.aigc.infrastructure.initializer.PresetAgentInitializer;
 import com.tianji.aigc.query.RecordQuery;
+import com.tianji.aigc.service.ChatRecordService;
 import com.tianji.aigc.service.ChatService;
 import com.tianji.aigc.service.ChatSessionService;
 import com.tianji.aigc.vo.ChatEventVO;
@@ -38,6 +40,7 @@ public class ChatController {
     private final AgentChatService agentChatService;
     private final ChatSessionService chatSessionService;
     private final ChatMemory chatMemory;
+    private final ChatRecordService chatRecordService;
 
     private static final TemplateVO TEMPLATE_VO = new TemplateVO();
 
@@ -53,28 +56,44 @@ public class ChatController {
         }
         try {
             String conversationId = userId + "_" + sessionId;
-            List<Message> messages = chatMemory.get(conversationId);
+            List<ChatRecord> chatRecords = chatRecordService.lambdaQuery()
+                    .eq(ChatRecord::getConversationId, conversationId)
+                    .orderByAsc(ChatRecord::getCreateTime)
+                    .list();
+
             List<RecordItem> records = new ArrayList<>();
-            int index = 0;
-            for (Message msg : messages) {
-                String type = msg.getMessageType().name();
-                JSONObject contentJson = new JSONObject();
-                if ("USER".equals(type)) {
-                    contentJson.set("type", "USER");
-                    contentJson.set("contents", List.of(Map.of("type", "text", "text", msg.getText())));
-                } else {
-                    contentJson.set("type", "AI");
-                    contentJson.set("text", msg.getText());
+            int segmentIndex = 0;
+            for (ChatRecord record : chatRecords) {
+                try {
+                    JSONObject dataJson = new JSONObject(record.getData());
+                    String messageType = dataJson.getStr("messageType", "");
+
+                    JSONObject contentJson = new JSONObject();
+                    if ("USER".equals(messageType)) {
+                        contentJson.set("type", "USER");
+                        String textContent = dataJson.getStr("textContent", "");
+                        contentJson.set("contents", List.of(Map.of("type", "text", "text", textContent)));
+                    } else if ("ASSISTANT".equals(messageType)) {
+                        contentJson.set("type", "AI");
+                        String textContent = dataJson.getStr("textContent", "");
+                        contentJson.set("text", textContent);
+                    } else {
+                        continue;
+                    }
+
+                    RecordItem item = new RecordItem();
+                    item.setId(record.getId());
+                    item.setSessionId(sessionId);
+                    item.setUserId(userId);
+                    item.setSegmentIndex(segmentIndex++);
+                    item.setContent(contentJson.toString());
+                    item.setCreateTime(record.getCreateTime());
+                    records.add(item);
+                } catch (Exception e) {
+                    log.warn("解析聊天记录失败, recordId={}", record.getId(), e);
                 }
-                RecordItem item = new RecordItem();
-                item.setId((long) index);
-                item.setSessionId(sessionId);
-                item.setUserId(userId);
-                item.setSegmentIndex(index++);
-                item.setContent(contentJson.toString());
-                item.setCreateTime(LocalDateTime.now());
-                records.add(item);
             }
+
             com.baomidou.mybatisplus.extension.plugins.pagination.Page<RecordItem> page =
                     new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, Math.max(records.size(), 1));
             page.setRecords(records);

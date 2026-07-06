@@ -1,8 +1,11 @@
 package com.tianji.aigc.infrastructure.initializer;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.tianji.aigc.domain.agent.constant.PublishStatus;
 import com.tianji.aigc.domain.agent.model.AgentEntity;
+import com.tianji.aigc.domain.agent.model.AgentVersionEntity;
 import com.tianji.aigc.mapper.AgentMapper;
+import com.tianji.aigc.mapper.AgentVersionMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -20,6 +23,7 @@ import java.util.List;
 public class PresetAgentInitializer implements ApplicationRunner {
 
     private final AgentMapper agentMapper;
+    private final AgentVersionMapper agentVersionMapper;
     private final DataSource dataSource;
 
     public static final String ROUTE_AGENT_ID = "preset_route";
@@ -107,7 +111,37 @@ public class PresetAgentInitializer implements ApplicationRunner {
             agent.setCreatedAt(java.time.LocalDateTime.now());
             agent.setUpdatedAt(java.time.LocalDateTime.now());
             agentMapper.insert(agent);
-            log.info("预置Agent创建成功: {} - {}", id, name);
+
+            String versionId = id + "_v1";
+            LambdaQueryWrapper<AgentVersionEntity> versionWrapper = new LambdaQueryWrapper<>();
+            versionWrapper.eq(AgentVersionEntity::getId, versionId);
+            AgentVersionEntity existingVersion = agentVersionMapper.selectOne(versionWrapper);
+
+            if (existingVersion == null) {
+                AgentVersionEntity version = new AgentVersionEntity();
+                version.setId(versionId);
+                version.setAgentId(id);
+                version.setName(name);
+                version.setDescription(description);
+                version.setVersionNumber("1.0.0");
+                version.setSystemPrompt(systemPrompt);
+                version.setWelcomeMessage(welcomeMessage);
+                version.setToolIds(toolIds);
+                version.setKnowledgeBaseIds(knowledgeBaseIds);
+                version.setChangeLog("初始版本");
+                version.setPublishStatus(PublishStatus.PUBLISHED.getCode());
+                version.setUserId("system");
+                version.setCreatedAt(java.time.LocalDateTime.now());
+                version.setUpdatedAt(java.time.LocalDateTime.now());
+                version.setPublishedAt(java.time.LocalDateTime.now());
+                version.setReviewTime(java.time.LocalDateTime.now());
+                agentVersionMapper.insert(version);
+            }
+
+            agent.setPublishedVersion(versionId);
+            agentMapper.updateById(agent);
+
+            log.info("预置Agent创建成功: {} - {}，版本: 1.0.0", id, name);
         } else {
             log.debug("预置Agent已存在: {} - {}", id, name);
         }
