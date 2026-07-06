@@ -1,29 +1,28 @@
 package com.tianji.aigc.agent;
 
+import cn.hutool.core.util.StrUtil;
+import com.tianji.aigc.application.rag.dto.RagSearchResultDTO;
+import com.tianji.aigc.application.rag.service.RagSearchService;
+import com.tianji.aigc.config.AIProperties;
 import com.tianji.aigc.config.SystemPromptConfig;
 import com.tianji.aigc.constants.Constant;
 import com.tianji.aigc.enums.AgentTypeEnum;
 import com.tianji.aigc.tools.CourseTools;
 import lombok.RequiredArgsConstructor;
-import org.springframework.ai.chat.client.advisor.api.Advisor;
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 
-/**
- * 课程咨询智能体
- * 结合 RAG 知识库检索 + CourseTools 工具调用
- */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ConsultAgent extends AbstractAgent {
 
     private final SystemPromptConfig systemPromptConfig;
-    private final VectorStore vectorStore;
+    private final AIProperties aiProperties;
+    private final RagSearchService ragSearchService;
     private final CourseTools courseTools;
 
     @Override
@@ -42,16 +41,33 @@ public class ConsultAgent extends AbstractAgent {
     }
 
     @Override
-    public List<Advisor> advisors() {
-        // RAG 增强：从知识库检索相关文档片段作为上下文
-        var qaAdvisor = QuestionAnswerAdvisor.builder(this.vectorStore)
-                .searchRequest(SearchRequest.builder()
-                        .similarityThreshold(0.6d) // 相似度阈值
-                        .topK(6) // 搜索的条数
-                        .build())
-                .build();
-
-        return List.of(qaAdvisor);
+    public String buildRagContext(String question) {
+        List<String> knowledgeBaseIds = aiProperties.getRag() != null
+                ? aiProperties.getRag().getConsultKnowledgeBaseIds() : null;
+        if (knowledgeBaseIds == null || knowledgeBaseIds.isEmpty()) {
+            return "";
+        }
+        try {
+            double threshold = aiProperties.getRag().getSimilarityThreshold();
+            int topK = aiProperties.getRag().getTopK();
+            List<RagSearchResultDTO> results = ragSearchService.search(
+                    knowledgeBaseIds, question, threshold, topK);
+            if (results == null || results.isEmpty()) {
+                return "";
+            }
+            StringBuilder context = new StringBuilder();
+            context.append("以下是从知识库中检索到的相关参考资料，请基于这些资料回答用户问题，如果资料中没有相关内容，请根据你的知识回答：\n\n");
+            int index = 1;
+            for (RagSearchResultDTO result : results) {
+                context.append("【资料").append(index).append("】\n");
+                context.append(result.getContent()).append("\n\n");
+                index++;
+            }
+            return context.toString();
+        } catch (Exception e) {
+            log.warn("RAG 检索失败, question={}", question, e);
+            return "";
+        }
     }
 
     @Override

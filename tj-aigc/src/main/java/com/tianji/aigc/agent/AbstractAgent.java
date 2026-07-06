@@ -141,8 +141,16 @@ public abstract class AbstractAgent implements Agent {
     }
 
     private ChatClient.ChatClientRequestSpec getChatClientRequest(String question, String sessionId, String requestId) {
+        String systemMessage = this.systemMessage();
+        String ragContext = this.buildRagContext(question);
+        String finalSystemMessage;
+        if (ragContext != null && !ragContext.isEmpty()) {
+            finalSystemMessage = ragContext + "\n\n" + systemMessage;
+        } else {
+            finalSystemMessage = systemMessage;
+        }
         return this.chatClient.prompt()
-                .system(promptSystemSpec -> promptSystemSpec.text(this.systemMessage()).params(this.systemMessageParams()))
+                .system(promptSystemSpec -> promptSystemSpec.text(finalSystemMessage).params(this.systemMessageParams()))
                 .advisors(advisorSpec -> advisorSpec.advisors(this.advisors()).params(this.advisorParams(sessionId, requestId)))
                 .tools(this.tools())
                 .toolContext(this.toolContext(sessionId, requestId))

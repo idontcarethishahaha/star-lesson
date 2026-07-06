@@ -59,6 +59,16 @@ public interface Agent {
         return "";
     }
 
+    /**
+     * 构建 RAG 检索上下文，默认返回空字符串。需要 RAG 增强的子类需覆盖此方法。
+     *
+     * @param question 用户问题
+     * @return 检索到的上下文文本
+     */
+    default String buildRagContext(String question) {
+        return "";
+    }
+
 
     /**
      * 获取工具列表，默认返回空数组。子类需根据需求覆盖此方法。

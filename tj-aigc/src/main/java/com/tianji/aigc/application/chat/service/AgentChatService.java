@@ -4,6 +4,8 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.tianji.aigc.application.chat.dto.AgentChatDTO;
 import com.tianji.aigc.application.rag.dto.RagSearchResultDTO;
 import com.tianji.aigc.application.rag.service.RagSearchService;
@@ -14,6 +16,7 @@ import com.tianji.aigc.domain.agent.model.AgentVersionEntity;
 import com.tianji.aigc.domain.rag.model.FileDetailEntity;
 import com.tianji.aigc.enums.ChatEventTypeEnum;
 import com.tianji.aigc.infrastructure.exception.BusinessException;
+import com.tianji.aigc.infrastructure.initializer.PresetAgentInitializer;
 import com.tianji.aigc.mapper.AgentMapper;
 import com.tianji.aigc.mapper.AgentVersionMapper;
 import com.tianji.aigc.mapper.FileDetailMapper;
@@ -30,6 +33,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -42,8 +46,10 @@ public class AgentChatService {
     private static final String GENERATE_STATUS_KEY = "GENERATE_STATUS";
     private static final double DEFAULT_SIMILARITY_THRESHOLD = 0.6;
     private static final int DEFAULT_TOP_K = 6;
+    private static final double MIN_ROUTE_CONFIDENCE = 0.5;
 
     private final ChatClient chatClient;
+    private final AgentChatClientFactory agentChatClientFactory;
     private final ChatMemory chatMemory;
     private final ChatSessionService chatSessionService;
     private final AgentMapper agentMapper;
@@ -57,16 +63,52 @@ public class AgentChatService {
         String sessionId = chatDTO.getSessionId();
         String agentId = chatDTO.getAgentId();
 
-        var conversationId = getConversationId(sessionId);
-        var outputBuilder = new StringBuilder();
-        StringRedisTemplate stringRedisTemplate = this.stringRedisTemplateProvider.getIfAvailable();
-        var hashOps = stringRedisTemplate != null ? stringRedisTemplate.boundHashOps(GENERATE_STATUS_KEY) : null;
-        var requestId = IdUtil.simpleUUID();
-        var userId = UserContext.getUser();
+        String conversationId = getConversationId(sessionId);
+        String requestId = IdUtil.simpleUUID();
+        Long userId = UserContext.getUser();
+
+        this.chatSessionService.update(sessionId, question, userId);
 
         AgentConfig agentConfig = loadAgentConfig(agentId);
 
-        this.chatSessionService.update(sessionId, question, userId);
+        if (isRouteAgent(agentId)) {
+            return handleRouteChat(question, sessionId, conversationId, requestId, userId, agentConfig);
+        }
+
+        return handleNormalChat(question, sessionId, conversationId, requestId, userId, agentConfig);
+    }
+
+    private Flux<ChatEventVO> handleRouteChat(String question, String sessionId, String conversationId,
+                                               String requestId, Long userId, AgentConfig agentConfig) {
+        ChatClient routeClient = agentChatClientFactory.getChatClient(agentConfig.toolBeanNames());
+        String routeResult = routeClient.prompt()
+                .system(promptSystem -> promptSystem
+                        .text(agentConfig.systemPrompt())
+                        .params(Map.of("now", DateUtil.now()))
+                )
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .toolContext(Map.of(Constant.REQUEST_ID, requestId, Constant.USER_ID, userId))
+                .user(question)
+                .call()
+                .content();
+
+        String targetAgentId = parseRouteResult(routeResult);
+        log.info("路由结果: {} -> {}", routeResult, targetAgentId);
+
+        AgentConfig targetConfig = loadAgentConfig(targetAgentId);
+        if (targetConfig == null) {
+            log.warn("路由目标Agent不存在: {}，使用咨询Agent兜底", targetAgentId);
+            targetConfig = loadAgentConfig(PresetAgentInitializer.CONSULT_AGENT_ID);
+        }
+
+        return handleNormalChat(question, sessionId, conversationId, requestId, userId, targetConfig);
+    }
+
+    private Flux<ChatEventVO> handleNormalChat(String question, String sessionId, String conversationId,
+                                                String requestId, Long userId, AgentConfig agentConfig) {
+        StringRedisTemplate stringRedisTemplate = this.stringRedisTemplateProvider.getIfAvailable();
+        var hashOps = stringRedisTemplate != null ? stringRedisTemplate.boundHashOps(GENERATE_STATUS_KEY) : null;
+        var outputBuilder = new StringBuilder();
 
         String ragContext = buildRagContext(agentConfig, question);
 
@@ -77,7 +119,9 @@ public class AgentChatService {
             finalSystemPrompt = agentConfig.systemPrompt();
         }
 
-        ChatClient.ChatClientRequestSpec prompt = this.chatClient.prompt()
+        ChatClient agentChatClient = agentChatClientFactory.getChatClient(agentConfig.toolBeanNames());
+
+        ChatClient.ChatClientRequestSpec prompt = agentChatClient.prompt()
                 .system(promptSystem -> promptSystem
                         .text(finalSystemPrompt)
                         .params(Map.of("now", DateUtil.now()))
@@ -129,6 +173,61 @@ public class AgentChatService {
                     }
                     return Flux.just(STOP_EVENT);
                 }));
+    }
+
+    private boolean isRouteAgent(String agentId) {
+        return PresetAgentInitializer.ROUTE_AGENT_ID.equals(agentId);
+    }
+
+    private String parseRouteResult(String routeResult) {
+        if (StrUtil.isBlank(routeResult)) {
+            return PresetAgentInitializer.CONSULT_AGENT_ID;
+        }
+
+        String cleaned = routeResult.trim();
+        int start = cleaned.indexOf('{');
+        int end = cleaned.lastIndexOf('}');
+        if (start != -1 && end != -1 && end > start) {
+            cleaned = cleaned.substring(start, end + 1);
+        }
+
+        try {
+            JSONObject json = JSONUtil.parseObj(cleaned);
+            String agentName = json.getStr("agentName");
+            Double confidence = json.getDouble("confidence", 0.0);
+            String reason = json.getStr("reason", "");
+
+            if (StrUtil.isBlank(agentName)) {
+                log.warn("路由结果缺少 agentName，使用默认Agent");
+                return PresetAgentInitializer.CONSULT_AGENT_ID;
+            }
+
+            if (confidence < MIN_ROUTE_CONFIDENCE) {
+                log.warn("路由置信度过低: {} < {}，使用默认Agent", confidence, MIN_ROUTE_CONFIDENCE);
+                return PresetAgentInitializer.CONSULT_AGENT_ID;
+            }
+
+            String targetAgentId = mapAgentNameToId(agentName.trim().toUpperCase());
+            log.info("路由成功: agentName={}, confidence={}, reason={}, targetAgentId={}",
+                    agentName, confidence, reason, targetAgentId);
+            return targetAgentId;
+        } catch (Exception e) {
+            log.warn("路由结果解析失败: {}，尝试直接匹配...", routeResult);
+            String directMatch = mapAgentNameToId(routeResult.trim().toUpperCase());
+            if (directMatch != null) {
+                return directMatch;
+            }
+            return PresetAgentInitializer.CONSULT_AGENT_ID;
+        }
+    }
+
+    private String mapAgentNameToId(String agentName) {
+        return switch (agentName) {
+            case "RECOMMEND" -> PresetAgentInitializer.RECOMMEND_AGENT_ID;
+            case "CONSULT" -> PresetAgentInitializer.CONSULT_AGENT_ID;
+            case "BUY" -> PresetAgentInitializer.BUY_AGENT_ID;
+            default -> null;
+        };
     }
 
     public void stop(String sessionId) {
@@ -226,6 +325,7 @@ public class AgentChatService {
 
         String systemPrompt = agent.getSystemPrompt();
         List<String> knowledgeBaseIds = agent.getKnowledgeBaseIds();
+        List<String> toolIds = agent.getToolIds();
 
         if (agent.getPublishedVersion() != null) {
             AgentVersionEntity version = agentVersionMapper.selectById(agent.getPublishedVersion());
@@ -236,10 +336,38 @@ public class AgentChatService {
                 if (version.getKnowledgeBaseIds() != null) {
                     knowledgeBaseIds = version.getKnowledgeBaseIds();
                 }
+                if (version.getToolIds() != null) {
+                    toolIds = version.getToolIds();
+                }
             }
         }
 
-        return new AgentConfig(systemPrompt, knowledgeBaseIds);
+        List<String> toolBeanNames = convertToolIdsToBeanNames(toolIds);
+
+        return new AgentConfig(systemPrompt, knowledgeBaseIds, toolBeanNames);
+    }
+
+    private List<String> convertToolIdsToBeanNames(List<String> toolIds) {
+        List<String> beanNames = new ArrayList<>();
+        if (toolIds == null || toolIds.isEmpty()) {
+            return beanNames;
+        }
+        for (String toolId : toolIds) {
+            if ("tool_course".equals(toolId) || "courseTools".equals(toolId)) {
+                beanNames.add("courseTools");
+            } else if ("tool_order".equals(toolId) || "orderTools".equals(toolId)) {
+                beanNames.add("orderTools");
+            } else if ("learningTools".equals(toolId)) {
+                beanNames.add("learningTools");
+            } else if ("studyPlanTools".equals(toolId)) {
+                beanNames.add("studyPlanTools");
+            } else if ("learningReportTools".equals(toolId)) {
+                beanNames.add("learningReportTools");
+            } else if ("checkInTools".equals(toolId)) {
+                beanNames.add("checkInTools");
+            }
+        }
+        return beanNames;
     }
 
     private void saveStopHistoryRecord(String conversationId, String content) {
@@ -250,7 +378,7 @@ public class AgentChatService {
         return UserContext.getUser() + "_" + sessionId;
     }
 
-    private record AgentConfig(String systemPrompt, List<String> knowledgeBaseIds) {
+    private record AgentConfig(String systemPrompt, List<String> knowledgeBaseIds, List<String> toolBeanNames) {
 
         static AgentConfig defaultConfig() {
             return new AgentConfig(
@@ -274,6 +402,7 @@ public class AgentChatService {
                             "- 如果用户问的问题需要课程信息，先调用工具查询\n" +
                             "- 用亲切的语气回答，让学生感到温暖\n" +
                             "- 鼓励为主，即使学生进度慢也要给予肯定",
+                    List.of(),
                     List.of()
             );
         }

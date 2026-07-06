@@ -9,22 +9,31 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "tj.ai.prompt")
 public class AIProperties {
 
-    private System system; // 系统提示语，用于课程推荐、购买业务
+    private System system;
+    private Rag rag;
 
     @Data
     public static class System {
-        private Chat chat; // 系统提示语，用于课程推荐、购买业务
-        private Chat routeAgent; // 路由智能体系统提示词
-        private Chat recommendAgent; // 推荐智能体系统提示词
-        private Chat consultAgent; // 咨询智能体系统提示词
-        private Chat buyAgent; // 购买智能体系统提示词
-        private Chat text; // 文本提示语，用于问答回复、润色等文本类型的业务
+        private Chat chat;
+        private Chat routeAgent;
+        private Chat recommendAgent;
+        private Chat consultAgent;
+        private Chat buyAgent;
+        private Chat text;
 
         @Data
         public static class Chat {
             private String dataId;
             private String group = "sl-group";
-            private long timeoutMs = 20000L; // 读取的超时时间，单位毫秒
+            private long timeoutMs = 20000L;
         }
+    }
+
+    @Data
+    public static class Rag {
+        private double similarityThreshold = 0.6;
+        private int topK = 6;
+        private List<String> recommendKnowledgeBaseIds;
+        private List<String> consultKnowledgeBaseIds;
     }
 }

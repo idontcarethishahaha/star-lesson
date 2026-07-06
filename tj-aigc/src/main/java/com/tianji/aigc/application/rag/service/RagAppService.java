@@ -18,6 +18,8 @@ import com.tianji.aigc.mapper.RagVersionMapper;
 import com.tianji.aigc.mapper.UserRagMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,6 +40,9 @@ public class RagAppService {
     private final RagVersionMapper ragVersionMapper;
     private final RagVectorService ragVectorService;
     private final RagSearchService ragSearchService;
+
+    @Qualifier("ragVectorizeExecutor")
+    private final ThreadPoolTaskExecutor ragVectorizeExecutor;
 
     @Transactional
     public String createDataset(RagDatasetCreateRequest request, String userId) {
@@ -195,13 +200,13 @@ public class RagAppService {
     }
 
     public void asyncVectorizeFile(String fileId) {
-        new Thread(() -> {
+        ragVectorizeExecutor.execute(() -> {
             try {
                 ragVectorService.vectorizeFile(fileId);
             } catch (Exception e) {
                 log.error("异步向量化文件失败, fileId={}", fileId, e);
             }
-        }).start();
+        });
     }
 
     @Transactional

@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.tianji.aigc.application.chat.dto.AgentChatDTO;
 import com.tianji.aigc.application.chat.service.AgentChatService;
 import com.tianji.aigc.dto.ChatDTO;
+import com.tianji.aigc.infrastructure.initializer.PresetAgentInitializer;
 import com.tianji.aigc.query.RecordQuery;
 import com.tianji.aigc.service.ChatService;
 import com.tianji.aigc.service.ChatSessionService;
@@ -93,7 +94,12 @@ public class ChatController {
         if (sessionId.isEmpty()) {
             sessionId = null;
         }
-        return this.chatService.chat(message, sessionId);
+        AgentChatDTO agentChatDTO = AgentChatDTO.builder()
+                .question(message)
+                .sessionId(sessionId)
+                .agentId(PresetAgentInitializer.ROUTE_AGENT_ID)
+                .build();
+        return this.agentChatService.chat(agentChatDTO);
     }
 
     @NoWrapper
@@ -104,40 +110,45 @@ public class ChatController {
         if (sessionId.isEmpty()) {
             sessionId = null;
         }
-        return this.chatService.chat(message, sessionId);
+        AgentChatDTO agentChatDTO = AgentChatDTO.builder()
+                .question(message)
+                .sessionId(sessionId)
+                .agentId(PresetAgentInitializer.ROUTE_AGENT_ID)
+                .build();
+        return this.agentChatService.chat(agentChatDTO);
     }
 
     @NoWrapper
     @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ChatEventVO> chat(@RequestBody ChatDTO chatDTO) {
-        if (chatDTO.getAgentId() != null && !chatDTO.getAgentId().isEmpty()) {
-            AgentChatDTO agentChatDTO = AgentChatDTO.builder()
-                    .question(chatDTO.getQuestion())
-                    .sessionId(chatDTO.getSessionId())
-                    .agentId(chatDTO.getAgentId())
-                    .build();
-            return this.agentChatService.chat(agentChatDTO);
+        String agentId = chatDTO.getAgentId();
+        if (agentId == null || agentId.isEmpty()) {
+            agentId = PresetAgentInitializer.ROUTE_AGENT_ID;
         }
-        return this.chatService.chat(chatDTO.getQuestion(), chatDTO.getSessionId());
+        AgentChatDTO agentChatDTO = AgentChatDTO.builder()
+                .question(chatDTO.getQuestion())
+                .sessionId(chatDTO.getSessionId())
+                .agentId(agentId)
+                .build();
+        return this.agentChatService.chat(agentChatDTO);
     }
 
     @PostMapping("/stop")
     public void stop(@RequestParam("sessionId") String sessionId,
                      @RequestParam(required = false) String agentId) {
-        if (agentId != null && !agentId.isEmpty()) {
-            this.agentChatService.stop(sessionId);
-        } else {
-            this.chatService.stop(sessionId);
+        if (agentId == null || agentId.isEmpty()) {
+            agentId = PresetAgentInitializer.ROUTE_AGENT_ID;
         }
+        this.agentChatService.stop(sessionId);
     }
 
     @PostMapping("/text")
     public String chatText(@RequestBody String question,
                            @RequestParam(required = false) String agentId) {
-        if (agentId != null && !agentId.isEmpty()) {
-            return this.agentChatService.chatText(question, agentId);
+        if (agentId == null || agentId.isEmpty()) {
+            agentId = PresetAgentInitializer.ROUTE_AGENT_ID;
         }
-        return this.chatService.chatText(question);
+        return this.agentChatService.chatText(question, agentId);
     }
 
     @GetMapping("/templates")

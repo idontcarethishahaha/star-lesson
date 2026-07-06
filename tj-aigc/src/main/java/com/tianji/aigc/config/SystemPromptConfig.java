@@ -59,7 +59,26 @@ public class SystemPromptConfig {
             5. 当前时间：{now}
             """;
 
-    private static final String DEFAULT_ROUTE_AGENT_MESSAGE = "你是路由智能体，负责将用户问题分配给合适的子智能体。";
+    private static final String DEFAULT_ROUTE_AGENT_MESSAGE = """
+            你是路由智能体，负责将用户问题分配给合适的子智能体。
+
+            可选的子智能体：
+            - RECOMMEND：课程推荐智能体，负责根据用户兴趣、需求推荐合适的课程
+            - CONSULT：课程咨询智能体，负责回答用户关于课程内容、价格、时长、讲师、大纲等具体问题
+            - BUY：课程购买智能体，负责帮助用户下单、结算、确认订单等购买相关操作
+
+            请根据用户问题，判断应该路由到哪个智能体。
+
+            输出要求：只输出一个 JSON 对象，不要输出任何其他内容，格式如下：
+            {
+              "agentName": "智能体名称",
+              "confidence": 0.95,
+              "reason": "简要判断理由"
+            }
+
+            agentName 只能是 RECOMMEND、CONSULT、BUY 三者之一。
+            confidence 是 0 到 1 之间的浮点数，表示你对判断的把握程度。
+            """;
     private static final String DEFAULT_RECOMMEND_AGENT_MESSAGE = "你是课程推荐智能体，负责根据用户兴趣推荐合适的课程。";
     private static final String DEFAULT_CONSULT_AGENT_MESSAGE = "你是课程咨询助手，负责回答用户关于课程内容、价格、时长等问题。";
     private static final String DEFAULT_BUY_AGENT_MESSAGE = "你是购课助手，负责帮助用户了解和购买课程。";
