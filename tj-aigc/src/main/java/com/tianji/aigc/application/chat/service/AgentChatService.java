@@ -69,13 +69,19 @@ public class AgentChatService {
 
         this.chatSessionService.update(sessionId, question, userId);
 
-        AgentConfig agentConfig = loadAgentConfig(agentId);
+        return Flux.just(ChatEventVO.builder()
+                        .eventType(ChatEventTypeEnum.THINKING.getValue())
+                        .eventData("正在思考...")
+                        .build())
+                .concatWith(Flux.defer(() -> {
+                    AgentConfig agentConfig = loadAgentConfig(agentId);
 
-        if (isRouteAgent(agentId)) {
-            return handleRouteChat(question, sessionId, conversationId, requestId, userId, agentConfig);
-        }
+                    if (isRouteAgent(agentId)) {
+                        return handleRouteChat(question, sessionId, conversationId, requestId, userId, agentConfig);
+                    }
 
-        return handleNormalChat(question, sessionId, conversationId, requestId, userId, agentConfig);
+                    return handleNormalChat(question, sessionId, conversationId, requestId, userId, agentConfig);
+                }));
     }
 
     private Flux<ChatEventVO> handleRouteChat(String question, String sessionId, String conversationId,
