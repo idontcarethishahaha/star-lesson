@@ -79,7 +79,7 @@ public class BusinessToolRegistry {
             ToolEntity courseTool = new ToolEntity();
             courseTool.setId(TOOL_COURSE);
             courseTool.setName("课程查询工具");
-            courseTool.setDescription("查询天机学堂课程信息的工具，可以根据课程ID获取课程详情");
+            courseTool.setDescription("查询天骄星课堂课程信息的工具，可以根据课程ID获取课程详情");
             courseTool.setToolType(ToolType.BUILTIN);
             courseTool.setStatus(ToolStatus.PUBLISHED);
             courseTool.setIsOffice(true);

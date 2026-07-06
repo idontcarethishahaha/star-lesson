@@ -154,11 +154,11 @@ public class AgentChatService {
 
     public String getWelcomeMessage(String agentId) {
         if (agentId == null || agentId.isEmpty()) {
-            return "你好！我是天机学堂的AI助手 (≧∇≦)ﾉ 有什么可以帮你的吗？";
+            return "你好！我是天骄星课堂的AI助手 (≧∇≦)ﾉ 有什么可以帮你的吗？";
         }
         AgentEntity agent = agentMapper.selectById(agentId);
         if (agent == null || Boolean.FALSE.equals(agent.getEnabled())) {
-            return "你好！我是天机学堂的AI助手 (≧∇≦)ﾉ 有什么可以帮你的吗？";
+            return "你好！我是天骄星课堂的AI助手 (≧∇≦)ﾉ 有什么可以帮你的吗？";
         }
         String welcomeMessage = agent.getWelcomeMessage();
         if (welcomeMessage == null || welcomeMessage.isEmpty()) {
@@ -254,7 +254,7 @@ public class AgentChatService {
 
         static AgentConfig defaultConfig() {
             return new AgentConfig(
-                    "你是天机学堂的AI学习助手，名叫「学堂小助手」(≧∇≦)ﾉ\n" +
+                    "你是天骄星课堂的AI学习助手，名叫「学堂小助手」(≧∇≦)ﾉ\n" +
                             "你的使命是帮助学生更好地学习和成长。\n\n" +
                             "【你可以做的事情】\n" +
                             "1. 📚 课程咨询：查询课程信息、课程对比、课程推荐\n" +

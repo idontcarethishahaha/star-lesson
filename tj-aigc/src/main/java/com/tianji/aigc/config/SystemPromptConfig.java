@@ -24,6 +24,7 @@ public class SystemPromptConfig {
     private final AtomicReference<String> chatSystemMessage = new AtomicReference<>();
     private final AtomicReference<String> routeAgentSystemMessage = new AtomicReference<>();
     private final AtomicReference<String> recommendAgentSystemMessage = new AtomicReference<>();
+    private final AtomicReference<String> consultAgentSystemMessage = new AtomicReference<>();
     private final AtomicReference<String> buyAgentSystemMessage = new AtomicReference<>();
     private final AtomicReference<String> textSystemMessage = new AtomicReference<>();
 
@@ -33,6 +34,7 @@ public class SystemPromptConfig {
         chatSystemMessage.set(DEFAULT_CHAT_SYSTEM_MESSAGE);
         routeAgentSystemMessage.set(DEFAULT_ROUTE_AGENT_MESSAGE);
         recommendAgentSystemMessage.set(DEFAULT_RECOMMEND_AGENT_MESSAGE);
+        consultAgentSystemMessage.set(DEFAULT_CONSULT_AGENT_MESSAGE);
         buyAgentSystemMessage.set(DEFAULT_BUY_AGENT_MESSAGE);
         textSystemMessage.set(DEFAULT_TEXT_MESSAGE);
         // 尝试从 Nacos 读取配置
@@ -40,6 +42,7 @@ public class SystemPromptConfig {
             loadConfig(aiProperties.getSystem().getChat(), chatSystemMessage);
             loadConfig(aiProperties.getSystem().getRouteAgent(), routeAgentSystemMessage);
             loadConfig(aiProperties.getSystem().getRecommendAgent(), recommendAgentSystemMessage);
+            loadConfig(aiProperties.getSystem().getConsultAgent(), consultAgentSystemMessage);
             loadConfig(aiProperties.getSystem().getBuyAgent(), buyAgentSystemMessage);
             loadConfig(aiProperties.getSystem().getText(), textSystemMessage);
         } catch (Exception e) {
@@ -48,7 +51,7 @@ public class SystemPromptConfig {
     }
 
     private static final String DEFAULT_CHAT_SYSTEM_MESSAGE = """
-            你是天机学堂的AI学习助手，叫"小天"。你需要：
+            你是天骄星课堂的AI学习助手，叫"小天"。你需要：
             1. 用友好、亲切的语气回答用户关于课程学习的问题
             2. 如果用户询问课程信息，可以使用课程查询工具
             3. 如果用户询问学习进度，可以使用学习进度工具
@@ -58,6 +61,7 @@ public class SystemPromptConfig {
 
     private static final String DEFAULT_ROUTE_AGENT_MESSAGE = "你是路由智能体，负责将用户问题分配给合适的子智能体。";
     private static final String DEFAULT_RECOMMEND_AGENT_MESSAGE = "你是课程推荐智能体，负责根据用户兴趣推荐合适的课程。";
+    private static final String DEFAULT_CONSULT_AGENT_MESSAGE = "你是课程咨询助手，负责回答用户关于课程内容、价格、时长等问题。";
     private static final String DEFAULT_BUY_AGENT_MESSAGE = "你是购课助手，负责帮助用户了解和购买课程。";
     private static final String DEFAULT_TEXT_MESSAGE = "你是文本处理助手，负责问答回复、润色等文本类业务。";
 
