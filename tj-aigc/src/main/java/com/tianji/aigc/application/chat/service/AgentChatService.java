@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.tianji.aigc.agent.AgentContextBus;
 import com.tianji.aigc.application.chat.dto.AgentChatDTO;
 import com.tianji.aigc.application.rag.dto.RagSearchResultDTO;
 import com.tianji.aigc.application.rag.service.RagSearchService;
@@ -57,6 +58,7 @@ public class AgentChatService {
     private final RagSearchService ragSearchService;
     private final FileDetailMapper fileDetailMapper;
     private final ObjectProvider<StringRedisTemplate> stringRedisTemplateProvider;
+    private final AgentContextBus agentContextBus;
 
     public Flux<ChatEventVO> chat(AgentChatDTO chatDTO) {
         String question = chatDTO.getQuestion();
@@ -68,6 +70,8 @@ public class AgentChatService {
         Long userId = UserContext.getUser();
 
         this.chatSessionService.update(sessionId, question, userId);
+
+        agentContextBus.appendConversationHistory(sessionId, "[用户] " + question);
 
         return Flux.just(ChatEventVO.builder()
                         .eventType(ChatEventTypeEnum.THINKING.getValue())
@@ -118,12 +122,30 @@ public class AgentChatService {
 
         String ragContext = buildRagContext(agentConfig, question);
 
-        final String finalSystemPrompt;
-        if (StrUtil.isNotBlank(ragContext)) {
-            finalSystemPrompt = agentConfig.systemPrompt() + "\n\n" + ragContext;
-        } else {
-            finalSystemPrompt = agentConfig.systemPrompt();
+        String conversationHistory = agentContextBus.getConversationHistory(sessionId);
+        String finalQuestion = question;
+        if (StrUtil.isNotBlank(conversationHistory)) {
+            finalQuestion = "以下是当前会话历史，请参考：\n" + conversationHistory + "\n\n用户当前问题：" + question;
         }
+
+        String recommendedCourses = agentContextBus.getRecommendedCourses(sessionId);
+        String consultedCourse = agentContextBus.getConsultedCourse(sessionId);
+
+        final String finalSystemPrompt;
+        StringBuilder systemPromptBuilder = new StringBuilder();
+        
+        if (StrUtil.isNotBlank(recommendedCourses)) {
+            systemPromptBuilder.append("【已推荐课程】\n").append(recommendedCourses).append("\n\n");
+        }
+        if (StrUtil.isNotBlank(consultedCourse)) {
+            systemPromptBuilder.append("【咨询过的课程】").append(consultedCourse).append("\n\n");
+        }
+        if (StrUtil.isNotBlank(ragContext)) {
+            systemPromptBuilder.append(ragContext).append("\n\n");
+        }
+        systemPromptBuilder.append(agentConfig.systemPrompt());
+        
+        finalSystemPrompt = systemPromptBuilder.toString();
 
         ChatClient agentChatClient = agentChatClientFactory.getChatClient(agentConfig.toolBeanNames());
 
@@ -136,7 +158,7 @@ public class AgentChatService {
                     advisor.param(ChatMemory.CONVERSATION_ID, conversationId);
                 })
                 .toolContext(Map.of(Constant.REQUEST_ID, requestId, Constant.USER_ID, userId))
-                .user(question);
+                .user(finalQuestion);
 
         return prompt.stream()
                 .chatResponse()

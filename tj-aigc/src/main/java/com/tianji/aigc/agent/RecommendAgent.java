@@ -10,6 +10,7 @@ import com.tianji.aigc.enums.AgentTypeEnum;
 import com.tianji.aigc.tools.CourseTools;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -24,6 +25,10 @@ public class RecommendAgent extends AbstractAgent {
     private final AIProperties aiProperties;
     private final RagSearchService ragSearchService;
     private final CourseTools courseTools;
+    private final AgentContextBus agentContextBus;
+
+    @Lazy
+    private final BuyAgent buyAgent;
 
     @Override
     public AgentTypeEnum getAgentType() {
@@ -32,7 +37,7 @@ public class RecommendAgent extends AbstractAgent {
 
     @Override
     public String systemMessage() {
-        return this.systemPromptConfig.getRecommendAgentSystemMessage().get();
+        return systemPromptConfig.getRecommendAgentSystemMessage().get();
     }
 
     @Override
@@ -73,5 +78,45 @@ public class RecommendAgent extends AbstractAgent {
     @Override
     public Map<String, Object> toolContext(String sessionId, String requestId) {
         return Map.of(Constant.REQUEST_ID, requestId);
+    }
+
+    @Override
+    public String process(String question, String sessionId) {
+        String result = super.process(question, sessionId);
+        agentContextBus.setRecommendedCourses(sessionId, result);
+        agentContextBus.appendConversationHistory(sessionId, "[推荐] " + question + " → " + truncateResult(result));
+        
+        if (isPurchaseFollowUp(question)) {
+            log.info("RecommendAgent detected purchase follow-up intent, routing to BuyAgent");
+            return buyAgent.process("基于以下推荐课程帮我下单：\n" + result, sessionId);
+        }
+        
+        return result;
+    }
+
+    @Override
+    public reactor.core.publisher.Flux<com.tianji.aigc.vo.ChatEventVO> processStream(String question, String sessionId) {
+        agentContextBus.setCurrentTask(sessionId, "推荐课程");
+        
+        return super.processStream(question, sessionId)
+                .doOnComplete(() -> {
+                    String result = agentContextBus.getRecommendedCourses(sessionId);
+                    if (StrUtil.isNotBlank(result) && isPurchaseFollowUp(question)) {
+                        log.info("RecommendAgent stream detected purchase follow-up, routing to BuyAgent");
+                    }
+                });
+    }
+
+    private boolean isPurchaseFollowUp(String question) {
+        String lower = question.toLowerCase();
+        return lower.contains("买") || lower.contains("下单") || lower.contains("购买") 
+                || lower.contains("然后") || lower.contains("之后") || lower.contains("帮我");
+    }
+
+    private String truncateResult(String result) {
+        if (result.length() > 100) {
+            return result.substring(0, 100) + "...";
+        }
+        return result;
     }
 }
